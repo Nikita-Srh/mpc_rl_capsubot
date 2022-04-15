@@ -102,11 +102,8 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-.env
 .venv
-env/
 venv/
-ENV/
 env.bak/
 venv.bak/
 
@@ -130,3 +127,14 @@ dmypy.json
 
 # ignore folders
 ignore/
+
+# pycharm stuff
+.idea
+__pycache__
+
+# some WIP stuff
+RL_data_store/
+some_model_examples/
+*.png
+RL_WIP/*.md
+bufer_for_ideas.py
