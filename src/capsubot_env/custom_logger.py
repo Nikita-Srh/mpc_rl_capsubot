@@ -8,8 +8,6 @@ class SummaryWriterCallback(BaseCallback):
         self._log_freq = 100  # log every 100 calls
 
         output_formats = self.logger.output_formats
-        # Save reference to tensorboard formatter object
-        # note: the failure case (not formatter found) is not handled here, should be done with try/except.
         self.tb_formatter = next(
             formatter
             for formatter in output_formats
@@ -27,6 +25,7 @@ class SummaryWriterCallback(BaseCallback):
             list_of_x_velocities = [
                 item.get("center_mass_velocity") for item in self.locals.get("infos")
             ]
+            list_of_dones = [item.get("dones") for item in self.locals.get("infos")]
             average_speed = np.array(sum(list_of_av_speeds) / len(list_of_av_speeds))
 
             self.tb_formatter.writer.add_scalar(
@@ -49,6 +48,12 @@ class SummaryWriterCallback(BaseCallback):
                         f"velocities/x_velocity_of_{i + 1}",
                         list_of_x_velocities[i],
                         self.num_timesteps,
+                    )
+
+            if sum(list_of_dones) != 0:
+                for i in range(len(list_of_dones)):
+                    self.tb_formatter.writer.add_scalar(
+                        f"rollout/dones_{i + 1}", list_of_dones[i], self.num_timesteps,
                     )
 
             for i in range(len(list_of_av_speeds)):

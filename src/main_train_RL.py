@@ -1,10 +1,13 @@
 import datetime
 import os
 
+import cProfile
+import pstats
+
 from stable_baselines3 import PPO
 from stable_baselines3.common.env_util import make_vec_env
 
-from src.capsubot_env.capsubot_env import CapsubotEnv
+from src.capsubot_env.capsubot_env import CapsubotEnv, CapsubotEnvToPoint
 from src.capsubot_env.custom_logger import SummaryWriterCallback
 
 # HYPERPARAMS
@@ -19,21 +22,27 @@ N_EPOCHS = 10
 # GAMMA =
 # GAE_LAMBDA =
 
-MAX_SPEED_VER = "PPO-"
-TO_POINT_VER = "TO_POINT_PPO-"
 
-
-def main(ver: str = MAX_SPEED_VER):
+def main(max_speed_ver: bool):
     additional_info_str = f"n_envs_{N_ENVS}_LR_{str(LEARNING_RATE)[2:]}_Nsteps_{N_STEPS}_Nepochs_{N_EPOCHS}" + datetime.datetime.now().strftime(
         "%d_%m_%Y-%H"
     )
 
+    if max_speed_ver:
+        ver = "PPO-"
+        sub_folder = "max_speed"
+        env = CapsubotEnv()
+    else:
+        ver = "TO_POINT_PPO-"
+        sub_folder = "to_point"
+        env = CapsubotEnvToPoint()
+
     models_dir: str = os.path.join(
-        "RL_WIP", "RL_data_store", "models", ver
+        "RL_WIP", "RL_data_store", "models", sub_folder, ver
     ) + additional_info_str
 
     logdir: str = os.path.join(
-        "RL_WIP", "RL_data_store", "logs", ver
+        "RL_WIP", "RL_data_store", "logs", sub_folder, ver
     ) + additional_info_str
 
     if not os.path.exists(models_dir):
@@ -42,7 +51,6 @@ def main(ver: str = MAX_SPEED_VER):
     if not os.path.exists(logdir):
         os.makedirs(logdir)
 
-    env = CapsubotEnv()
     env = make_vec_env(lambda: env, n_envs=N_ENVS)
 
     model = PPO(
@@ -55,15 +63,21 @@ def main(ver: str = MAX_SPEED_VER):
         n_epochs=N_EPOCHS,
     )
 
-    for i in range(1, 80):
+    # pr = cProfile.Profile()
+
+    for i in range(1, 70):
+        # pr.enable()
         model.learn(
             total_timesteps=int(TIMESTEPS),
             reset_num_timesteps=False,
-            tb_log_name="PPO_xGrT0_2andxSmT-0_05",
+            tb_log_name="PPO_xGrT0_3andxSmT-0_08",
             callback=SummaryWriterCallback(),
         )
+        # pr.disable()
         model.save(os.path.join(models_dir, f"{int(TIMESTEPS * i)}"))
+        # ps = pstats.Stats(pr).strip_dirs().sort_stats("cumtime")
+        # ps.print_stats(50)
 
 
 if __name__ == "__main__":
-    main(ver=MAX_SPEED_VER)
+    main(max_speed_ver=False)
